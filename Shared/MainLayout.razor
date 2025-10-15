@@ -1,0 +1,17 @@
+@inherits LayoutComponentBase
+<div class="min-h-screen flex">
+    <div class="w-72 bg-white shadow-md">
+        <div class="p-6 border-b">
+            <h1 class="text-2xl font-bold">Operatio</h1>
+            <p class="text-sm text-gray-500">Expenses Dashboard</p>
+        </div>
+        <nav class="p-4">
+            <a href="/" class="block px-3 py-2 rounded hover:bg-gray-100">Dashboard</a>
+            <a href="/login" class="block px-3 py-2 rounded hover:bg-gray-100">Login</a>
+            <a href="/register" class="block px-3 py-2 rounded hover:bg-gray-100">Register</a>
+        </nav>
+    </div>
+    <div class="flex-1 p-8">
+        @Body
+    </div>
+</div>

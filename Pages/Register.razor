@@ -1,0 +1,29 @@
+@page "/register"
+@inject ExpensesTracker.Services.AuthService Auth
+@inject NavigationManager Nav
+
+<div class="max-w-md mx-auto bg-white p-6 rounded shadow">
+    <h2 class="text-xl font-semibold mb-4">Create an account</h2>
+    @if (!string.IsNullOrEmpty(error))
+    {
+        <div class="text-red-600 mb-3">@error</div>
+    }
+    <div class="space-y-3">
+        <input @bind="username" placeholder="Username" class="w-full p-2 border rounded" />
+        <input @bind="password" placeholder="Password" type="password" class="w-full p-2 border rounded" />
+        <button class="w-full bg-green-600 text-white py-2 rounded" @onclick="HandleRegister">Register</button>
+    </div>
+</div>
+
+@code {
+    string username = string.Empty;
+    string password = string.Empty;
+    string? error;
+
+    async Task HandleRegister()
+    {
+        var (ok, err) = await Auth.RegisterAsync(username, password);
+        if (!ok) { error = err; return; }
+        Nav.NavigateTo("/");
+    }
+}

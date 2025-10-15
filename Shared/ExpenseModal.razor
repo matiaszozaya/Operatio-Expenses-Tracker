@@ -1,0 +1,181 @@
+﻿@using ExpensesTracker.Data
+@inject ExpensesTracker.Services.ExpenseService ExpenseService
+
+@implements IAsyncDisposable
+@implements IDisposable
+
+<div class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
+    <div class="bg-white rounded shadow-lg w-96 p-6">
+        <h3 class="text-lg font-semibold mb-3">@((Expense?.Id == 0) ? "New Expense" : "Edit Expense")</h3>
+        <div class="space-y-2">
+            <input placeholder="Title" class="w-full p-2 border rounded" @bind="Expense.Title" />
+            <input placeholder="Amount" class="w-full p-2 border rounded" type="number" step="0.01" @bind="Expense.Amount" />
+            <InputDate @bind-Value="Expense.Date" class="w-full p-2 border rounded" />
+            <textarea placeholder="Notes" class="w-full p-2 border rounded" @bind="Expense.Notes"></textarea>
+
+            <div class="space-y-2">
+                <div class="flex space-x-2">
+                    <label class="flex items-center">
+                        <input type="radio" name="entityType" value="bank" checked="@(entityType == "bank")" @onchange="@(e => SetEntityType("bank"))" class="mr-2" />
+                        <span class="text-sm text-gray-600">Bank</span>
+                    </label>
+                    <label class="flex items-center">
+                        <input type="radio" name="entityType" value="wallet" checked="@(entityType == "wallet")" @onchange="@(e => SetEntityType("wallet"))" class="mr-2" />
+                        <span class="text-sm text-gray-600">Digital Wallet</span>
+                    </label>
+                </div>
+                <div>
+                    @if (entityType == "bank")
+                    {
+                        <select class="w-full p-2 border rounded" @bind="selectedEntityId">
+                            <option value="">Select a bank...</option>
+                            @if (banks != null)
+                            {
+                                @foreach (var bank in banks)
+                                {
+                                    <option value="@bank.Id">@bank.Name</option>
+                                }
+                            }
+                        </select>
+                    }
+                    else if (entityType == "wallet")
+                    {
+                        <select class="w-full p-2 border rounded" @bind="selectedEntityId">
+                            <option value="">Select a wallet...</option>
+                            @if (wallets != null)
+                            {
+                                @foreach (var wallet in wallets)
+                                {
+                                    <option value="@wallet.Id">@wallet.Name</option>
+                                }
+                            }
+                        </select>
+                    }
+                </div>
+            </div>
+
+            <div class="flex space-x-4 py-4">
+                <label class="flex items-center">
+                    <input type="checkbox" class="mr-2" @bind="Expense.IsTransferred" />
+                    <strong class="text-sm text-gray-600">🔁 Transferred</strong>
+                </label>
+                <label class="flex items-center">
+                    <input type="checkbox" class="mr-2" @bind="Expense.IsPaid" />
+                    <strong class="text-sm text-green-600">💰 Paid</strong>
+                </label>
+            </div>
+        </div>
+        <div class="mt-4 text-right">
+            <button class="mr-2 px-4 py-2 rounded bg-grey-200" @onclick="Close">Cancel</button>
+            <button class="px-4 py-2 rounded bg-green-600 text-white" @onclick="Save">Save</button>
+        </div>
+    </div>
+</div>
+
+@code {
+    [Parameter]
+    public Expense Expense { get; set; } = new();
+
+    [Parameter]
+    public EventCallback OnClose { get; set; }
+
+    [Parameter]
+    public EventCallback OnSaved { get; set; }
+
+    private List<FinancialEntity>? banks;
+    private List<FinancialEntity>? wallets;
+    private string? selectedEntityId;
+    private string entityType = "bank";
+    private System.Threading.Timer? autoSaveTimer;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await LoadFinancialEntities();
+        if (Expense.FinancialEntityId.HasValue)
+        {
+            var entity = await ExpenseService.GetFinancialEntityAsync(Expense.FinancialEntityId.Value);
+            if (entity != null)
+            {
+                entityType = entity.Type == EntityType.Bank ? "bank" : "wallet";
+                selectedEntityId = entity.Id.ToString();
+            }
+        }
+    }
+
+    private async Task LoadFinancialEntities()
+    {
+        banks = await ExpenseService.GetFinancialEntitiesByTypeAsync(EntityType.Bank);
+        wallets = await ExpenseService.GetFinancialEntitiesByTypeAsync(EntityType.DigitalWallet);
+        StateHasChanged();
+    }
+
+    private void SetEntityType(string type)
+    {
+        entityType = type;
+        selectedEntityId = null;
+        StateHasChanged();
+    }
+
+    protected override void OnParametersSet()
+    {
+        autoSaveTimer?.Dispose();
+        autoSaveTimer = new System.Threading.Timer(_ =>
+        {
+            InvokeAsync(AutoSave);
+        }, null, TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3));
+    }
+
+    private async Task AutoSave()
+    {
+        UpdateExpenseEntity();
+        if (Expense.Id != 0)
+        {
+            await ExpenseService.UpdateAsync(Expense);
+        }
+    }
+
+    private void UpdateExpenseEntity()
+    {
+        if (string.IsNullOrEmpty(selectedEntityId))
+        {
+            Expense.FinancialEntityId = null;
+        }
+        else
+        {
+            Expense.FinancialEntityId = int.Parse(selectedEntityId);
+        }
+    }
+
+    async Task Save()
+    {
+        UpdateExpenseEntity();
+        if (Expense.Id == 0)
+        {
+            await ExpenseService.AddAsync(Expense);
+        }
+        else
+        {
+            await ExpenseService.UpdateAsync(Expense);
+        }
+        await OnSaved.InvokeAsync();
+    }
+
+    async Task Close() => await OnClose.InvokeAsync();
+
+    public void Dispose()
+    {
+        autoSaveTimer?.Dispose();
+    }
+
+    public async ValueTask DisposeAsync()
+    {
+        if (autoSaveTimer is IAsyncDisposable timer)
+        {
+            await timer.DisposeAsync();
+        }
+        else
+        {
+            autoSaveTimer?.Dispose();
+        }
+    }
+}
