@@ -38,8 +38,8 @@ namespace ExpensesTracker.Migrations
                     b.Property<bool>("IsTransferred")
                         .HasColumnType("INTEGER");
 
-                    b.Property<string>("Notes")
-                        .HasColumnType("TEXT");
+                    b.Property<int>("PaymentMethod")
+                        .HasColumnType("INTEGER");
 
                     b.Property<string>("Title")
                         .IsRequired()

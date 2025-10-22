@@ -3,7 +3,9 @@
 @inject AuthService Auth
 @inject ExpenseService ExpenseService
 @inject NavigationManager NavigationManager
+@inject DollarValues DollarValues
 @page "/"
+@using System.Globalization
 
 <AuthorizeView>
     <Authorized>
@@ -20,16 +22,16 @@
             </div>
             <div class="grid grid-cols-3 gap-4 mb-6">
                 <div class="col-span-1 bg-white p-4 rounded shadow">
-                    <div class="text-sm text-gray-500">Total</div>
-                    <div class="text-xl font-bold">@total.ToString("C")</div>
+                    <div class="text-sm text-gray-500">Total ARS$</div>
+                    <div class="text-xl text-blue-900 font-bold">@total.ToString("C")</div>
+                </div>
+                <div class="col-span-1 bg-white p-4 rounded shadow">
+                    <div class="text-sm text-gray-500">Total USD$</div>
+                    <div class="text-xl text-green-900 font-bold">@ToUsdDisplay(total)</div>
                 </div>
                 <div class="col-span-1 bg-white p-4 rounded shadow">
                     <div class="text-sm text-gray-500">This month</div>
                     <div class="text-xl font-bold">@monthTotal.ToString("C")</div>
-                </div>
-                <div class="col-span-1 bg-white p-4 rounded shadow">
-                    <div class="text-sm text-gray-500">Count</div>
-                    <div class="text-xl font-bold">@(expenses?.Count ?? 0)</div>
                 </div>
             </div>
             <div class="mb-4 flex flex-wrap gap-4">
@@ -80,13 +82,14 @@
                 }
                 else
                 {
-                    <table class="min-w-full">
+                    <table class="min-w-full table-fixed">
                         <thead class="bg-gray-50">
                             <tr>
-                                <th class="p-3 text-left">Title</th>
-                                <th class="p-3 text-left">Amount</th>
+                                <th class="p-3 text-left w-2/5">Title</th>
+                                <th class="p-3 text-left">ARS$</th>
+                                <th class="p-3 text-left">USD$</th>
                                 <th class="p-3 text-left">Date</th>
-                                <th class="p-3 text-left">Entity</th>
+                                <th class="p-3 text-left w-1/5">Entity</th>
                                 <th class="p-3 text-left">Payment Method</th>
                                 <th class="p-3"></th>
                             </tr>
@@ -95,32 +98,33 @@
                             @foreach (var e in filteredExpenses)
                             {
                                 <tr class="border-t">
-                                    <td class="p-3">@e.Title</td>
-                                    <td class="p-3">@e.Amount.ToString("C")</td>
-                                    <td class="p-3">@e.Date.ToShortDateString()</td>
-                                    <td class="p-3">
+                                    <td class="p-3 truncate whitespace-nowrap overflow-hidden">@e.Title</td>
+                                    <td class="p-3 truncate text-blue-900">@e.Amount.ToString("C")</td>
+                                    <td class="p-3 truncate text-green-900">@ToUsdDisplay(e.Amount)</td>
+                                    <td class="p-3 truncate">@e.Date.ToShortDateString()</td>
+                                    <td class="p-3 truncate whitespace-nowrap overflow-hidden">
                                         @if (e.FinancialEntity != null)
                                         {
                                             <span>@e.FinancialEntity.Name (@e.FinancialEntity.Type)</span>
                                         }
                                     </td>
-                                    <td class="p-3">
+                                    <td class="p-3 truncate">
                                         @if (e.IsPaid)
                                         {
-                                            <span class="text-green-600">Paid</span>
+                                            <span class="text-center bg-green-100 text-green-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-green-900 dark:text-green-300">Paid</span>
+                                        }
+                                        else if (e.IsTransferred)
+                                        {
+                                            <span class="text-center bg-blue-100 text-blue-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-blue-900 dark:text-blue-300">Transferred</span>
                                         }
                                         else
                                         {
-                                            <span class="text-yellow-600">Pending</span>
-                                        }
-                                        @if (e.IsTransferred)
-                                        {
-                                            <span class="ml-2 text-blue-600">(Transferred)</span>
+                                            <span class="text-center bg-yellow-100 text-yellow-800 text-xs font-medium me-2 px-2.5 py-0.5 rounded-sm dark:bg-yellow-900 dark:text-yellow-300">Pending</span>
                                         }
                                     </td>
-                                    <td class="p-3 text-right">
-                                        <button class="text-indigo-600 mr-2" @onclick="() => Edit(e.Id)">Edit</button>
-                                        <button class="text-red-600" @onclick="() => Delete(e.Id)">Delete</button>
+                                    <td class="p-3 truncate">
+                                        <button class="text-indigo-600 mr-2" @onclick="() => Edit(e.Id)">✏️</button>
+                                        <button class="text-red-600" @onclick="() => Delete(e.Id)">🗑️</button>
                                     </td>
                                 </tr>
                             }
@@ -158,14 +162,36 @@
     int? selectedMonth = null;
     int? selectedYear = null;
     List<int> availableYears = new();
+    decimal DollarPrice { get; set; }
+
+    // Return a safe (non-zero) dollar price to avoid division by zero
+    decimal SafeDollarPrice => DollarPrice <= 0 ? 1m : DollarPrice;
+
+    // Formats an ARS amount as USD using the current DollarPrice safely.
+    string ToUsdDisplay(decimal arsAmount)
+    {
+        try
+        {
+            var usd = arsAmount / SafeDollarPrice;
+            // Use invariant culture and USD currency symbol for consistency
+            return usd.ToString("C", CultureInfo.CreateSpecificCulture("en-US"));
+        }
+        catch
+        {
+            // Fallback in the unlikely event of an error
+            return "$0.00";
+        }
+    }
 
     protected override async Task OnInitializedAsync()
     {
+        await DollarValues.GetLastDollarValues();
         var authState = await AuthStateProvider.GetAuthenticationStateAsync();
         var user = authState.User;
         if (user.Identity?.IsAuthenticated == true)
         {
             currentUserId = int.Parse(user.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)!.Value);
+            DollarPrice = (DollarValues.PriceBuy + DollarValues.PriceSell) / 2;
             await Load();
         }
     }
@@ -174,14 +200,13 @@
     {
         filteredExpenses = expenses;
 
-        if (!string.IsNullOrWhiteSpace(searchText))
-        {
-            filteredExpenses = filteredExpenses?
-                .Where(e => e.Title.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
-                           (e.Notes?.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false) ||
-                           (e.FinancialEntity?.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false))
-                .ToList();
-        }
+    if (!string.IsNullOrWhiteSpace(searchText))
+    {
+        filteredExpenses = filteredExpenses?
+        .Where(e => e.Title.Contains(searchText, StringComparison.OrdinalIgnoreCase) ||
+               (e.FinancialEntity?.Name.Contains(searchText, StringComparison.OrdinalIgnoreCase) ?? false))
+        .ToList();
+    }
 
         if (!string.IsNullOrWhiteSpace(selectedEntityType))
         {
@@ -271,4 +296,3 @@
         NavigationManager.NavigateTo("/login");
     }
 }
-    {

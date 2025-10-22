@@ -14,6 +14,7 @@ builder.Services.AddServerSideBlazor();
 builder.Services.AddDbContext<AppDbContext>(options => options.UseSqlite("Data Source=expenses.db"));
 builder.Services.AddScoped<ProtectedSessionStorage>();
 builder.Services.AddLogging(logging => logging.AddConsole());
+builder.Services.AddScoped<DollarValues>();
 builder.Services.AddScoped<AuthService>();
 builder.Services.AddScoped<SimpleAuthStateProvider>(sp =>
     new SimpleAuthStateProvider(
