@@ -1,0 +1,154 @@
+﻿################################################################################
+# This .gitignore file was automatically created by Microsoft(R) Visual Studio.
+################################################################################
+
+# Visual Studio
+.vs/
+.vscode/
+*.suo
+*.user
+*.userosscache
+*.sln.docstates
+*.ncb
+*.opensdf
+*.sdf
+*.VC.db
+*.VC.opendb
+*.pidb
+*.suo
+*.userprefs
+
+# Build results
+[Bb]in/
+[Oo]bj/
+**/[Bb]in/
+**/[Oo]bj/
+artifacts/
+publish/
+
+# Visual Studio cache/options folders
+.vs/
+_ReSharper*/
+*Resharper*
+_ReSharper
+
+# NuGet
+*.nupkg
+# The packages folder can be ignored because of Package Restore
+packages/
+.nuget/
+project.lock.json
+project.fragment.lock.json
+
+# Dotnet
+*.dotnet_tool.state
+
+# Rider
+.idea/
+*.sln.iml
+
+# ASP.NET Scaffolding
+ScaffoldingReadMe.txt
+
+# User-specific files
+*.user
+*.userosscache
+*.suo
+*.sln.docstates
+*.sln.ide
+
+# Publish/pack output
+publish/
+wwwroot/_framework/
+wwwroot/dist/
+wwwroot/build/
+out/
+
+# Blazor / SPA tooling
+node_modules/
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+package-lock.json
+pnpm-lock.yaml
+.pnpm-debug.log
+
+# LibMan
+libman_cache/
+
+# Local environment files
+.env
+.env.*
+local.settings.json
+appsettings.*.Local.json
+secrets.json
+
+# Logs and databases
+*.log
+logs/
+LogFiles/
+*.mdf
+*.ldf
+*.sqlite
+*.db
+
+# Test result files
+TestResults/
+*.trx
+coverage/
+*.coverage
+*.coveragexml
+
+# Temporary files, generated files
+*~
+*.tmp
+*.temp
+*.bak
+*.backup
+*.swp
+*.swo
+Thumbs.db
+*.DS_Store
+*.class
+
+# Visual Studio Code workspace history
+.history/
+
+# JetBrains Rider
+.idea/
+*.sln.iml
+
+# Windows image file caches
+ehthumbs.db
+Desktop.ini
+
+# OS generated files
+.DS_Store
+.Trashes
+*.~
+
+# dotCover
+*.dotCover
+
+# FxCop
+*.xml
+
+# SQL Server object explorer
+.sqlproj.user
+
+# Azure
+*.publishsettings
+ServiceFabricLocalClusterRoot/
+
+# Misc
+coverage.txt
+
+# Ensure Visual Studio team files are ignored
+.vs/
+*/.vs/
+
+# Keep wwwroot content under source control (do not ignore wwwroot/),
+# but ignore build/publish output inside it (kept above):
+# wwwroot/
+
+# End of file

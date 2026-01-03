@@ -1,12 +1,11 @@
 # Expenses Tracker (Blazor Server)
 
-A modern Blazor Server app for tracking expenses, built with .NET 8, EF Core, and SQLite.
+A modern Blazor Server app for tracking expenses, built with .NET 10, EF Core, and SQLite.
 
 ## Features
 - Blazor Server UI
 - Entity Framework Core with SQLite persistence
 - Minimal username/password authentication
-- Tailwind CSS for styling (via CDN)
 
 ## Usage Notes
 - Data is stored in SQLite.
