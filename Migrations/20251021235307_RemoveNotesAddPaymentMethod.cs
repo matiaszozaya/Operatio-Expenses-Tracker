@@ -4,36 +4,36 @@
 
 namespace ExpensesTracker.Migrations
 {
-    /// <inheritdoc />
-    public partial class RemoveNotesAddPaymentMethod : Migration
-    {
-        /// <inheritdoc />
-        protected override void Up(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.DropColumn(
-                name: "Notes",
-                table: "Expenses");
+	/// <inheritdoc />
+	public partial class RemoveNotesAddPaymentMethod : Migration
+	{
+		/// <inheritdoc />
+		protected override void Up(MigrationBuilder migrationBuilder)
+		{
+			migrationBuilder.DropColumn(
+				name: "Notes",
+				table: "Expenses");
 
-            migrationBuilder.AddColumn<int>(
-                name: "PaymentMethod",
-                table: "Expenses",
-                type: "INTEGER",
-                nullable: false,
-                defaultValue: 0);
-        }
+			migrationBuilder.AddColumn<int>(
+				name: "PaymentMethod",
+				table: "Expenses",
+				type: "INTEGER",
+				nullable: false,
+				defaultValue: 0);
+		}
 
-        /// <inheritdoc />
-        protected override void Down(MigrationBuilder migrationBuilder)
-        {
-            migrationBuilder.DropColumn(
-                name: "PaymentMethod",
-                table: "Expenses");
+		/// <inheritdoc />
+		protected override void Down(MigrationBuilder migrationBuilder)
+		{
+			migrationBuilder.DropColumn(
+				name: "PaymentMethod",
+				table: "Expenses");
 
-            migrationBuilder.AddColumn<string>(
-                name: "Notes",
-                table: "Expenses",
-                type: "TEXT",
-                nullable: true);
-        }
-    }
+			migrationBuilder.AddColumn<string>(
+				name: "Notes",
+				table: "Expenses",
+				type: "TEXT",
+				nullable: true);
+		}
+	}
 }

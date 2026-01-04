@@ -1,76 +1,92 @@
 ﻿@using ExpensesTracker.Data
 @inject ExpensesTracker.Services.ExpenseService ExpenseService
+@inject ExpensesTracker.Services.DollarValues DollarValues
 
 @implements IAsyncDisposable
 @implements IDisposable
 
-<div class="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center">
-    <div class="bg-white rounded shadow-lg w-96 p-6">
-        <h3 class="text-lg font-semibold mb-3">@((Expense?.Id == 0) ? "New Expense" : "Edit Expense")</h3>
-        <div class="space-y-2">
-            <input placeholder="Description" class="w-full p-2 border rounded" @bind="Expense.Title" />
-            <input placeholder="Amount" class="w-full p-2 border rounded" type="number" step="0.01" @bind="Expense.Amount" />
-            <InputDate @bind-Value="Expense.Date" class="w-full p-2 border rounded" />
+<div class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center" style="background-color: rgba(0,0,0,0.5); z-index:1050;">
+    <div class="card shadow" style="width:24rem;">
+        <div class="card-body">
+            <h3 class="h5 mb-3">@((Expense?.Id == 0) ? "New Expense" : "Edit Expense")</h3>
+            <div class="mb-3">
+                <input placeholder="Description" class="form-control mb-2" @bind="Expense.Title" />
+                <input placeholder="Amount" class="form-control mb-2" type="number" step="0.01" @bind="Expense.Amount" />
 
-            <div class="space-y-2">
-                <div class="flex space-x-2">
-                    <label class="flex items-center">
-                        <input type="radio" name="entityType" value="cash" checked="@(entityType == "cash")" @onchange="@(e => SetEntityType("cash"))" class="mr-2" />
-                        <span class="text-sm text-gray-600">Cash</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input type="radio" name="entityType" value="bank" checked="@(entityType == "bank")" @onchange="@(e => SetEntityType("bank"))" class="mr-2" />
-                        <span class="text-sm text-gray-600">Bank</span>
-                    </label>
-                    <label class="flex items-center">
-                        <input type="radio" name="entityType" value="wallet" checked="@(entityType == "wallet")" @onchange="@(e => SetEntityType("wallet"))" class="mr-2" />
-                        <span class="text-sm text-gray-600">Digital Wallet</span>
-                    </label>
+                <!-- Currency selection checkboxes (mutually exclusive) -->
+                <div class="mb-2 d-flex gap-3 align-items-center">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="arsCheck" checked="@isArsExpense" @onchange="@(e => OnCurrencyChanged(false))" />
+                        <label class="form-check-label" for="arsCheck">ARS</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="usdCheck" checked="@isUsdExpense" @onchange="@(e => OnCurrencyChanged(true))" />
+                        <label class="form-check-label" for="usdCheck">USD</label>
+                    </div>
                 </div>
-                <div>
-                    @if (entityType != "cash" && entityType == "bank")
-                    {
-                        <select class="w-full p-2 border rounded" @bind="selectedEntityId">
-                            <option value="">Select a bank...</option>
-                            @if (banks != null)
-                            {
-                                @foreach (var bank in banks)
+
+                <InputDate @bind-Value="Expense.Date" class="form-control mb-2" />
+
+                <div class="mb-2">
+                    <div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="entityType" value="cash" checked="@(entityType == "cash")" @onchange="@(e => SetEntityType("cash"))" />
+                            <label class="form-check-label">Cash</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="entityType" value="bank" checked="@(entityType == "bank")" @onchange="@(e => SetEntityType("bank"))" />
+                            <label class="form-check-label">Bank</label>
+                        </div>
+                        <div class="form-check form-check-inline">
+                            <input class="form-check-input" type="radio" name="entityType" value="wallet" checked="@(entityType == "wallet")" @onchange="@(e => SetEntityType("wallet"))" />
+                            <label class="form-check-label">Digital Wallet</label>
+                        </div>
+                    </div>
+                    <div class="mt-2">
+                        @if (entityType != "cash" && entityType == "bank")
+                        {
+                            <select class="form-select" @bind="selectedEntityId">
+                                <option value="">Select a bank...</option>
+                                @if (banks != null)
                                 {
-                                    <option value="@bank.Id">@bank.Name</option>
+                                    @foreach (var bank in banks)
+                                    {
+                                        <option value="@bank.Id">@bank.Name</option>
+                                    }
                                 }
-                            }
-                        </select>
-                    }
-                    else if (entityType == "wallet")
-                    {
-                        <select class="w-full p-2 border rounded" @bind="selectedEntityId">
-                            <option value="">Select a wallet...</option>
-                            @if (wallets != null)
-                            {
-                                @foreach (var wallet in wallets)
+                            </select>
+                        }
+                        else if (entityType == "wallet")
+                        {
+                            <select class="form-select" @bind="selectedEntityId">
+                                <option value="">Select a wallet...</option>
+                                @if (wallets != null)
                                 {
-                                    <option value="@wallet.Id">@wallet.Name</option>
+                                    @foreach (var wallet in wallets)
+                                    {
+                                        <option value="@wallet.Id">@wallet.Name</option>
+                                    }
                                 }
-                            }
-                        </select>
-                    }
+                            </select>
+                        }
+                    </div>
+                </div>
+
+                <div class="d-flex gap-3 py-3 align-items-center">
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="transferredCheck" @bind="Expense.IsTransferred" />
+                        <label class="form-check-label" for="transferredCheck">🔁 Transferred</label>
+                    </div>
+                    <div class="form-check">
+                        <input class="form-check-input" type="checkbox" id="paidCheck" @bind="Expense.IsPaid" />
+                        <label class="form-check-label text-success" for="paidCheck">💰 Paid</label>
+                    </div>
                 </div>
             </div>
-
-            <div class="flex space-x-4 py-4">
-                <label class="flex items-center">
-                    <input type="checkbox" class="mr-2" @bind="Expense.IsTransferred" />
-                    <strong class="text-sm text-gray-600">🔁 Transferred</strong>
-                </label>
-                <label class="flex items-center">
-                    <input type="checkbox" class="mr-2" @bind="Expense.IsPaid" />
-                    <strong class="text-sm text-green-600">💰 Paid</strong>
-                </label>
+            <div class="text-end">
+                <button class="btn btn-secondary me-2" @onclick="Close">Cancel</button>
+                <button class="btn btn-success" @onclick="Save">Save</button>
             </div>
-        </div>
-        <div class="mt-4 text-right">
-            <button class="mr-2 px-4 py-2 rounded bg-grey-200" @onclick="Close">Cancel</button>
-            <button class="px-4 py-2 rounded bg-green-600 text-white" @onclick="Save">Save</button>
         </div>
     </div>
 </div>
@@ -91,6 +107,10 @@
     private string entityType = "bank";
     private System.Threading.Timer? autoSaveTimer;
 
+    // currency state: true = USD selected, false = ARS selected
+    private bool isUsdExpense = false;
+    private bool isArsExpense = true;
+
     protected override async Task OnInitializedAsync()
     {
         await LoadFinancialEntities();
@@ -103,6 +123,9 @@
                 selectedEntityId = entity.Id.ToString();
             }
         }
+
+        // initialize currency checkboxes from Expense.StoredCurrency
+        SetCurrencyFromExpense();
     }
 
     private async Task LoadFinancialEntities()
@@ -126,14 +149,48 @@
         {
             InvokeAsync(AutoSave);
         }, null, TimeSpan.FromSeconds(3), TimeSpan.FromSeconds(3));
+
+        // keep checkbox state in sync if Expense changed
+        SetCurrencyFromExpense();
+    }
+
+    private void SetCurrencyFromExpense()
+    {
+        // StoredCurrency == 1 means USD stored
+        var isUsd = Expense?.StoredCurrency == 1;
+        isUsdExpense = isUsd;
+        isArsExpense = !isUsd;
+    }
+
+    private void OnCurrencyChanged(bool usdSelected)
+    {
+        // Ensure mutually exclusive selection
+        isUsdExpense = usdSelected;
+        isArsExpense = !usdSelected;
+
+        Expense.StoredCurrency = usdSelected ? 1 : 0;
     }
 
     private async Task AutoSave()
     {
-        UpdateExpenseEntity();
+        // Do not modify or persist existing expenses during autosave.
         if (Expense.Id != 0)
+            return;
+
+        // For new expenses only: update entity fields, set USDRate and persist.
+        UpdateExpenseEntity();
+
+        var dollarPrice = (DollarValues.PriceBuy + DollarValues.PriceSell) / 2m;
+        var safeDollarPrice = dollarPrice <= 0 ? 1m : decimal.Round(dollarPrice, 2);
+        Expense.USDRate = safeDollarPrice;
+
+        try
         {
-            await ExpenseService.UpdateAsync(Expense);
+            await ExpenseService.AddAsync(Expense);
+        }
+        catch
+        {
+            // ignore autosave errors
         }
     }
 
@@ -165,8 +222,13 @@
     async Task Save()
     {
         UpdateExpenseEntity();
+        // Only set current safe USD rate when creating a new expense
         if (Expense.Id == 0)
         {
+            var dollarPrice = (DollarValues.PriceBuy + DollarValues.PriceSell) / 2m;
+            var safeDollarPrice = dollarPrice <= 0 ? 1m : decimal.Round(dollarPrice, 2);
+            Expense.USDRate = safeDollarPrice;
+
             await ExpenseService.AddAsync(Expense);
         }
         else

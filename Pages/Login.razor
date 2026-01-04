@@ -2,18 +2,29 @@
 @inject ExpensesTracker.Services.AuthService Auth
 @inject NavigationManager Nav
 
-<div class="max-w-md mx-auto bg-white p-6 rounded shadow">
-    <h2 class="text-xl font-semibold mb-4">Login</h2>
-    @if (!string.IsNullOrEmpty(error))
-    {
-        <div class="text-red-600 mb-3">@error</div>
-    }
-    <div class="space-y-3">
-        <input @bind="username" placeholder="Username" class="w-full p-2 border rounded" />
-        <input @bind="password" placeholder="Password" type="password" class="w-full p-2 border rounded" />
-        <button class="w-full bg-indigo-600 text-white py-2 rounded" @onclick="HandleLogin">Login</button>
-    </div>
-</div>
+<AuthorizeView>
+    <Authorized>
+        <div class="alert alert-success" role="alert">
+            You are already logged in!
+        </div>
+    </Authorized>
+    <NotAuthorized>
+        <div class="card mx-auto" style="max-width:28rem; margin-top:2rem;">
+            <div class="card-body">
+                <h2 class="h5 mb-3">Login</h2>
+                @if (!string.IsNullOrEmpty(error))
+                {
+                    <div class="text-danger mb-3">@error</div>
+                }
+                <div class="mb-3">
+                    <input placeholder="Username" class="form-control mb-2" @bind="username" @onkeyup="HandleKey" />
+                    <input placeholder="Password" type="password" class="form-control mb-2" @bind="password" @onkeyup="HandleKey" />
+                    <button class="btn btn-primary w-100" @onclick="HandleLogin">Login</button>
+                </div>
+            </div>
+        </div>
+    </NotAuthorized>
+</AuthorizeView>
 
 @code {
     string username = string.Empty;
@@ -25,5 +36,10 @@
         var (ok, err) = await Auth.LoginAsync(username, password);
         if (!ok) { error = err; return; }
         Nav.NavigateTo("/");
+    }
+
+    async Task HandleKey(KeyboardEventArgs e)
+    {
+        if (e.Key == "Enter") await HandleLogin();
     }
 }

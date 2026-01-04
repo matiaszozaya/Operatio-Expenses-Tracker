@@ -152,3 +152,5 @@ coverage.txt
 # wwwroot/
 
 # End of file
+/expenses.db-shm
+/expenses.db-wal

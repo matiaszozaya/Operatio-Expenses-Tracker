@@ -15,7 +15,7 @@ namespace ExpensesTracker.Migrations
         protected override void BuildModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
-            modelBuilder.HasAnnotation("ProductVersion", "8.0.0");
+            modelBuilder.HasAnnotation("ProductVersion", "10.0.1");
 
             modelBuilder.Entity("ExpensesTracker.Data.Expense", b =>
                 {
@@ -41,8 +41,14 @@ namespace ExpensesTracker.Migrations
                     b.Property<int>("PaymentMethod")
                         .HasColumnType("INTEGER");
 
+                    b.Property<int>("StoredCurrency")
+                        .HasColumnType("INTEGER");
+
                     b.Property<string>("Title")
                         .IsRequired()
+                        .HasColumnType("TEXT");
+
+                    b.Property<decimal>("USDRate")
                         .HasColumnType("TEXT");
 
                     b.Property<int>("UserId")
